@@ -25,6 +25,8 @@ setTimeOutPromisified(ms).then(()=>{
 
 
 
+
+
 //call back hell example -> When we have to perform many unsynchronous operations in a nested way the code looks very ugly and considered as callback hell
 setTimeout(() => {
     console.log("first level of call back hell")
@@ -38,3 +40,20 @@ setTimeout(() => {
 
 
  
+
+
+// async await -> it is a way to write asynchronous code such that it looks and behave like
+// a synchronous code
+
+let solve = async ()=>{
+    await setTimeOutPromisified(1000)
+    console.log("hi")
+    await setTimeOutPromisified(3000)
+    console.log("hello")
+    await setTimeOutPromisified(5000)
+    console.log("hello there")
+}
+
+solve()
+
+console.log("hey there")
