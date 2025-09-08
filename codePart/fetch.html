@@ -25,6 +25,15 @@
         }
     }
 
-    fetchData();
+    
+    async function findSum(){
+        let sum = await axios.post('http://localhost:3000/sum',{
+            a:5,
+            b:10
+        });
+        document.getElementById('container').innerText = sum.data;
+    }
+
+    findSum();
 </script>
 </html>
