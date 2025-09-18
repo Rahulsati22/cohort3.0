@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+</head>
+<body>
+    <div id="container">
+        Hello world
+    </div>
+</body>
+
+<script>
+   async function fetchData() {
+        try {
+            let response = await axios.get('https://jsonplaceholder.typicode.com/todos/1');
+            // document.getElementById('container').innerText = response.data.title;//
+            document.getElementById('container').innerText = JSON.stringify(response.data, null, 2);
+
+        } catch (error) {
+            console.error('There has been a problem with your fetch operation:', error);
+        }
+    }
+
+    
+    async function findSum(){
+        let sum = await axios.post('http://localhost:3000/sum',{
+            a:5,
+            b:10
+        });
+        document.getElementById('container').innerText = sum.data;
+    }
+
+    findSum();
+</script>
+</html>

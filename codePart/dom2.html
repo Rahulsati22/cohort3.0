@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Part2</title>
+</head>
+
+<body>
+    <input type="text">
+    <button onclick="addTodos()">Add Todo</button>
+</body>
+<script>
+    let todos = []
+    let count = 0
+    function addTodos() {
+        const inputValue = document.querySelector("input").value
+        count++
+        todos.push({ title: inputValue, id: count })
+        document.querySelector("input").value = ""
+        render()
+    }
+
+    function deleteTodo(id) {
+        count--
+        todos = todos.filter(todo => parseInt(todo.id) !== parseInt(id));
+        render();
+    }
+
+    function editTodo(id, save = false) {
+        if (save == false) {
+            let valueOld;
+            for (let i = 0; i < todos.length; i++) {
+                if (todos[i].id == id) {
+                    valueOld = todos[i].title
+                }
+            }
+
+            document.querySelector("input").value = valueOld
+            document.querySelector(`[data-id='${id}'].edit-btn`).innerText = "Save"
+        } else {
+            let newValue = document.querySelector("input").value
+            for (let i = 0; i < todos.length; i++) {
+                if (todos[i].id == id) {
+                    todos[i].title = newValue
+                }
+            }
+            document.querySelector("input").value = ""
+            document.querySelector(`[data-id='${id}'].edit-btn`).innerText = "Edit"
+            render()
+        }
+    }
+
+
+    function render() {
+        document.querySelectorAll('.todo-item').forEach(elem => elem.remove());
+        for (let i = 0; i < todos.length; i++) {
+            let divElem = document.createElement("div")
+            let spanElem = document.createElement("span")
+            let buttonElem = document.createElement("button")
+            let editElem = document.createElement("button")
+            spanElem.innerText = todos[i].title
+            buttonElem.innerText = "Delete"
+            buttonElem.setAttribute("onclick", `deleteTodo(${todos[i].id})`)
+            buttonElem.classList.add(`${todos[i].id}`, "delete-btn", "icon-btn");
+            editElem.classList.add(`${todos[i].id}`, "edit-btn", "icon-btn");
+            editElem.setAttribute("data-id", todos[i].id);
+            editElem.innerText = "Edit"
+            editElem.setAttribute("onclick", `editTodo(${todos[i].id}, this.innerText === 'Save')`)
+            divElem.appendChild(spanElem)
+            divElem.appendChild(buttonElem)
+            divElem.appendChild(editElem)
+            divElem.setAttribute("id", todos[i].id)
+            divElem.setAttribute("class", "todo-item")
+            document.querySelector("body").appendChild(divElem)
+        }
+    }
+</script>
+
+</html>

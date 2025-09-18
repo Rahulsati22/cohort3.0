@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body style="display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 50px;">
+
+    <section id="signUpSection" style="display: flex; flex-direction: column; gap: 10px;">
+        <input type="text" id="usernameInput" placeholder="username">
+        <input type="text" id="passwordInput" placeholder="password">
+        <button onclick="signUp()">Sign Up</button>
+    </section>
+
+
+    <section id="signInSection" style="display: flex; flex-direction: column; gap: 10px;">
+        <input type="text" id="signInUsernameInput" placeholder="username">
+        <input type="text" id="signInPasswordInput" placeholder="password">
+        <button onclick="signIn()">Sign In</button>
+    </section>
+
+    <section id="profileSection">
+        <div id="profileDiv">
+            <!-- It will fill when the sign in completed successfully -->
+        </div>
+    </section>
+
+    <section id="logoutSection">
+        <!-- I will fill when the sign in completed successfully -->
+    </section>
+
+
+
+    <script>
+
+        async function signUp(){
+            const username = document.getElementById("usernameInput").value 
+            const password = document.getElementById("passwordInput").value
+            const response = await axios.post('http://localhost:3000/signup', {username, password})
+            alert(response.data)
+        }
+
+        async function signIn(){
+            const username = document.getElementById("signInUsernameInput").value 
+            const password = document.getElementById("signInPasswordInput").value
+            const response = await axios.post('http://localhost:3000/login', {username, password})
+            const token = response.data.token
+            if (token){
+                localStorage.setItem("token", token)
+                alert("Signed in successfully")
+                getProfile()
+                showLogoutButton()
+                document.getElementById("signInSection").style.display = "none"
+                document.getElementById("signUpSection").style.display = "none"
+            }else{
+                alert("please send valid credentials")
+            }
+        }
+
+
+        async function getProfile(){
+            const token = localStorage.getItem("token")
+            const response = await axios.get("http://localhost:3000/me", {headers:{token}})
+            document.getElementById("profileDiv").innerText = JSON.stringify(response.data)
+        }
+
+        async function showLogoutButton(){
+            document.getElementById("logoutSection").innerHTML = `<button onclick="logout()">Logout</button>`
+        }
+
+        async function logout(){
+            const token = localStorage.getItem("token")
+            const response = await axios.post("http://localhost:3000/logout", {}, {headers:{token}})
+            localStorage.setItem("token","")
+            alert(response.data)
+            document.getElementById("profileDiv").innerText = ""
+            document.getElementById("logoutSection").innerHTML = ""
+            document.getElementById("signInSection").style.display = "flex"
+            document.getElementById("signUpSection").style.display = "flex"
+        }
+        
+    </script>
+</body>
+
+</html>
