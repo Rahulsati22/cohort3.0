@@ -2,6 +2,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
+import cors from 'cors'
 
 
 
@@ -9,8 +10,8 @@ import cookieParser from 'cookie-parser'
 import authRouter from './routes/auth.route.js'
 import productRouter from './routes/product.route.js';
 import cartRouter from './routes/cart.route.js';
-import couponRouter from './routes/coupon.route.js';
 import paymentRouter from './routes/payment.route.js';
+import analyticsRouter from './routes/analytics.route.js';
 
 
 //mongodb connection function
@@ -30,7 +31,15 @@ connectDb()
 //using express and middlewares
 const app = express()
 app.use(cookieParser())
-app.use(express.json())
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+app.use(cors({
+    origin: 'http://localhost:5173', // allow your frontend
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true
+}))
+
 
 
 //this is the port where we are running our application
@@ -40,8 +49,8 @@ const PORT = process.env.PORT || 3000
 app.use("/api/auth", authRouter)
 app.use("/api/product", productRouter)
 app.use("/api/cart", cartRouter)
-app.use("/api/coupons", couponRouter)
 app.use("/api/payment", paymentRouter)
+app.use("/api/analytics", analyticsRouter)
 
 //listening on the port
 app.listen(PORT, () => {

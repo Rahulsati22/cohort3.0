@@ -24,6 +24,10 @@ const ProductModel = new mongoose.Schema({
     isFeatured: {
         type: Boolean,
         dafault: false
+    },
+    stock :{
+        type : Number,
+        required: [true, 'Stock of the product is required']
     }
 }, { timestamps: true })
 

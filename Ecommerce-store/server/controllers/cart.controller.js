@@ -1,25 +1,39 @@
 import User from "../models/User.model.js"
-
 //controller for adding to cart
+//this controller is working fine we will not touch it
 const addToCart = async (req, res) => {
     try {
-        if (!req.body || !req.user || !req.user.cart) {
+        if (!req.body || !req.user) {
             return res.status(400).send({ message: "Bad request" })
         }
-        const productId = req.body
-        const user = req.user
-        const existingProduct = user.cart.find(item => item.product === productId)
-        if (existingProduct) {
-            existingProduct.quantity += 1
-            await user.save()
+        const { productId } = req.body
+
+        const UserModel = await User.findById(req.user._id)
+        let existingItem = null
+
+        for (let i = 0; i < UserModel.cart.length; i++) {
+            if (UserModel.cart[i].product._id.toString() === productId) {
+                existingItem = UserModel.cart[i]
+                break;
+            }
+        }
+
+
+        if (existingItem) {
+            existingItem.quantity += 1
+            await UserModel.save()
+            const user = await User.findById(req.user._id).populate("cart.product")
             return res.send({ cartItems: user.cart, message: "Item added to cart successfully" })
         }
-        user.cart.push({
+        UserModel.cart.push({
             quantity: 1,
             product: productId
         })
-        await user.save()
-        return res.send({ cartItems: user.cart, message: "Item added to cart successfully" })
+        await UserModel.save()
+        //calling the user
+        const UserData = await User.findById(req.user._id).populate("cart.product")
+        console.log(UserData.cart)
+        return res.send({ cartItems: UserData.cart, message: "Item added to cart successfully" })
     } catch (error) {
         console.log("Error in addToCart controller", error.message)
         return res.status(500).send({ message: error.message })
@@ -31,17 +45,25 @@ const addToCart = async (req, res) => {
 //controller for removing from cart
 const removeAllFromCart = async (req, res) => {
     try {
-        if (!req.body || !req.user || !req.user.cart) {
+        //checking some conditions before removing item from cart
+        if (!req.body || !req.user) {
             return res.status(400).send({ message: "Bad request" })
         }
-        const productId = req.body
+        //taking product id from request.body
+        const { productId } = req.body
+        //extracting user from req.user
         const user = req.user
+        //checking if user has a cart
         if (!user.cart) {
             return res.status(400).send({ message: "User does not have a cart" })
         }
-        const newCart = user.cart.filter(item => item.product !== productId)
+        //creating new cart for the user
+        const newCart = user.cart.filter(item => item.product.toString() !== productId)
+        //updating cart of the user
         user.cart = newCart
+        //saving the cart for the user
         await user.save()
+        //sending back the cart
         return res.status(200).send(user.cart)
     } catch (error) {
         console.log("Error in remove all from cart controller", error.message)
@@ -59,7 +81,7 @@ const updateQuantity = async (req, res) => {
         const { id: productId } = req.params
         const { quantity } = req.body
         const user = req.user
-        const existingItem = user.cart.find(item => item.product === productId)
+        let existingItem = user.cart.find(item => item.product.toString() === productId)
         if (!existingItem) {
             return res.status(404).send({ message: "Item not found in cart" })
         }
@@ -68,7 +90,7 @@ const updateQuantity = async (req, res) => {
         else
             existingItem.quantity = quantity
         await user.save()
-        return res.send(user.cart)
+        return res.status(200).send({ cart: user.cart })
     } catch (error) {
         console.log("Error in update quantity controller", error.message)
         return res.status(500).send({ message: error.message })
@@ -77,11 +99,13 @@ const updateQuantity = async (req, res) => {
 
 
 //controller to get all products (khud se likha hai maine ye)
+// this controller is working fine we will not touch it
 const getAllProducts = async (req, res) => {
     try {
-        const user = await user.findById(req.user._id).populate("cart.product")
-        return res.send(user.cart)
+        const user = await User.findById(req.user._id).populate("cart.product")
+        return res.send({ cart: user.cart })
     } catch (error) {
+        console.log(error)
         console.log("Error in get all cart products controller", error.message)
         return res.status(500).send({ message: error.message })
     }

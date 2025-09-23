@@ -1,9 +1,7 @@
 import User from '../models/User.model.js'
 import { generateToken, storeRefreshToken } from '../helperFunctions/tokens.js'
-import { response } from 'express'
 import client from '../lib/redisClient.js'
 import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
 
 
 
@@ -32,7 +30,7 @@ const signup = async (req, res, next) => {
             httpOnly: true,
             secure: process.env.NODE_ENV == "production",
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000
+            maxAge: 24 * 60 * 60 * 1000
         })
 
         await res.cookie('refreshToken', refresh_token, {
@@ -79,7 +77,7 @@ const login = async (req, res, next) => {
             httpOnly: true,
             secure: process.env.NODE_ENV == "production",
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000
+            maxAge: 24 * 60 * 60 * 1000
         })
 
 
@@ -152,12 +150,10 @@ const userProfile = async (req, res) => {
 const logout = async (req, res, next) => {
     try {
         const refreshToken = req.cookies.refreshToken
-        console.log(refreshToken)
         if (refreshToken) {
             const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH)
             await client.del(`refresh_token:${decoded.userId}`)
         }
-
         res.clearCookie("accessToken")
         res.clearCookie("refreshToken")
         return res.status(200).send({ message: "Logout successfully" })
