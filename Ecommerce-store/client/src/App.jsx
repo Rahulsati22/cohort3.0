@@ -11,7 +11,7 @@ import DashBoard from "./pages/DashBoard";
 import CategoryPage from "./pages/CategoryPage";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./stores/useCartStore";
-
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 // Guards
 function RequireAuth({ user }) {
   const location = useLocation();
@@ -33,12 +33,14 @@ function App() {
   // Run once to check authentication
   useEffect(() => {
     checkAuth();
+
   }, []);
 
   // Run when user becomes available
   useEffect(() => {
     if (user) {
       getCartItems();
+      // console.log(user)
     }
   }, [user]);
 
@@ -78,6 +80,7 @@ function App() {
             {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
             <Route path="/dashboard" element={user?.role == 'Admin' ? <DashBoard /> : <Navigate to='/' />} />
             <Route path='/cart' element={<CartPage />} />
+            <Route path='/paymentsuccess' element={<PaymentSuccessPage />} />
           </Route>
 
           <Route path='/category/:category' element={<CategoryPage />} />

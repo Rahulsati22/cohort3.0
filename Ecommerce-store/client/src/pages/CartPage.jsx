@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Loader from '../components/Loader';
+import Razorpay from 'razorpay';
+import { useUserStore } from '../stores/useUserStore';
 import {
     Minus,
     Plus,
@@ -15,6 +17,7 @@ import {
     X
 } from 'lucide-react';
 import { useCartStore } from '../stores/useCartStore';
+import { instance } from '../lib/axios';
 
 const CartPage = () => {
     const { cart, total, loading, deleteFromCart, updateQuantity } = useCartStore();
@@ -214,6 +217,60 @@ const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => 
 
 // Mobile Order Summary
 const MobileOrderSummary = ({ total, deliveryFee, totalPrice, itemCount }) => {
+    const { user } = useUserStore()
+    const { cart } = useCartStore()
+
+    const proceedToCheckout = async (totalAmount) => {
+        try {
+            console.log("inside procced to checkout")
+
+            //setting total Amount
+            const finalAmount = Number(totalAmount)
+
+
+            //making call to get razorpay key
+            const response1 = await instance.get('/api/payment/get-key')
+            console.log(response1)
+            const key = response1.data.key
+            console.log(key)
+
+
+
+            //making call to create order
+            const response2 = await instance.post('/api/payment/process-payment', { amount: finalAmount, cart })
+            console.log(response2)
+            console.log(response2.data.order.amount)
+            console.log(response2.data.order.currency)
+            console.log(response2.data.order.id)
+
+
+
+            //now creating options
+            const options = {
+                key: response1.data.key,
+                amount: response2.data.order.amount, // already in paise
+                currency: response2.data.order.currency,
+                name: 'Sneakerzy',
+                description: 'Transaction for shoes',
+                order_id: response2.data.order.id,
+                callback_url: 'http://localhost:5000/api/payment/payment-verification',
+                prefill: {
+                    name: user.name,
+                    email: user.email,
+                },
+                theme: {
+                    color: '#F59E0B',         // Your amber primary color
+                    backdrop_color: '#111827', // Dark background
+                    hide_topbar: false,       // Show Razorpay branding
+                },
+
+            };
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        } catch (error) {
+            console.log(error)
+        }
+    }
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -273,6 +330,7 @@ const MobileOrderSummary = ({ total, deliveryFee, totalPrice, itemCount }) => {
                     className="w-full bg-gradient-to-r from-amber-500 to-orange-500 
                              text-gray-900 font-bold py-4 rounded-xl transition-all
                              flex items-center justify-center gap-2 shadow-lg"
+                    onClick={() => proceedToCheckout(totalPrice)}
                 >
                     <CreditCard size={18} />
                     Proceed to Checkout

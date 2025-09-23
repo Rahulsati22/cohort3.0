@@ -87,5 +87,6 @@ export const useCartStore = create((set, get) => ({
             toast.error("Not able to update quantity")
             set({ loading: false })
         }
-    }
+    },
+
 }))

@@ -1,94 +1,76 @@
-import { stripeClient } from "../lib/stripe.js";
-import Order from "../models/Order.model.js";
+import { razorpayInstance } from "../lib/razorpay.js"
+import crypto from 'crypto'
+import Order from "../models/Order.model.js"
 
-export const createCheckOutSession = async (req, res) => {
+//creating an order using razorpay
+export const paymentProcess = async (req, res) => {
     try {
-        const products = req.body.products
-
-
-        if (!Array.isArray(products) || products.length == 0)
-            return res.status(400).send({ message: "Please add a task" });
-
-        let totalAmount = 0
-        let lineItems = products.map(product => {
-            let amount = Math.round(product.price * 100)
-            totalAmount += amount * product.quantity
-            return {
-                price_data: {
-                    currency: "usd",
-                    product_data: {
-                        name: product.name,
-                        images: [product.image]
-                    },
-                    unit_amount: amount
-                },
-                quantity: product.quantity
-            }
-        })
-
-
-
-
-        //now using stripe
-        const session = await stripeClient.checkout.sessions.create({
-            payment_method_types: ["card"],
-            line_items: lineItems,
-            mode: "payment",
-            success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
-            metadata: {
-                userId: req.user._id.toString(),
-                products: JSON.stringify(
-                    products.map((p) => ({
-                        id: p._id,
-                        quantity: p.quantity,
-                        price: p.price
-                    }))
-                )
-            }
-        })
-
-        return res.status(200).json({ id: session._id, totalAmount: totalAmount / 100 })
-    } catch (error) {
-        console.log("error in create checkout session controller", error.message)
-        return res.status(200).send({ message: error.message })
-    }
-}
-
-
-
-export const checkOutSuccess = async (req, res) => {
-    try {
-        const { sessionId } = req.body;
-        const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-        if (session.payment_status === "paid") {
-            //create a new order
-            const products = JSON.parse(session.metadata.products)
-            const order = new Order({
-                user: session.metadata.userId,
-                products: products.map(product => ({
-                    product: product.id,
-                    quantity: product.quantity,
-                    price: product.price
-                })),
-                totalAmount: session.amount_total / 100, //convert from cents to dollars
-                stripeSessionId: sessionId
-            })
-
-            await order.save()
-            res.status(200).json({
-                success: true,
-                message: "Payment successfull and order created",
-                orderId: order._id
-            })
+        const { cart } = req.body
+        const options = {
+            amount: (Number(req.body.amount) * 100),
+            currency: "INR"
         }
 
+        const order = await razorpayInstance.orders.create(options)
+
+        //product array
+        let arr = []
+        for (let i = 0; i < cart.length; i++) {
+            let obj = {
+                product: cart[i].product._id,
+                quantity: cart[i].quantity,
+                price: cart[i].product.price
+            }
+            arr.push(obj)
+        }
+
+
+        //total amount
+        let totalAmount = 0
+        for (let i = 0; i < arr.length; i++) {
+            totalAmount += Number(arr[i].price) * Number(arr[i].quantity)
+        }
+
+
+        //user
+        const userId = req.user._id
+
+
+
+        //razorpay order id
+        let razorpayOrderId = order.id
+        await Order.create({ user: userId, products: arr, totalAmount, razorpayOrderId })
+
+
+        return res.status(200).send({ order })
     } catch (error) {
-        console.log("Error in check-out success controller", error.message)
+        console.log("Inside payment")
+        console.log(error)
         return res.status(500).json({ message: error.message })
     }
 }
 
 
+//key will be needed to show payment page
+export const getKey = async (req, res) => {
+    console.log(process.env.RAZORPAY_KEY_ID)
+    return res.status(200).send({ key: process.env.RAZORPAY_KEY_ID })
+}
 
+
+//doing payment verification
+export const paymentVerification = async (req, res) => {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body
+    const order = await Order.findOne({ razorpayOrderId: razorpay_order_id })
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+    const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(body.toString()).digest('hex')
+    console.log(razorpay_signature, expectedSignature)
+
+    if (razorpay_signature === expectedSignature) {
+        order.razorpayPaymentId = razorpay_payment_id
+        order.razorpaySignature = razorpay_signature
+        await order.save()
+        return res.redirect('http://localhost:5173/paymentsuccess?reference=' + razorpay_payment_id)
+    }
+    return res.status(400).send({ message: 'Payment failed' })
+} //payment verification
