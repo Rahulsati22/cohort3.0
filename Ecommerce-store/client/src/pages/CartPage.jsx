@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Loader from '../components/Loader';
@@ -14,14 +14,18 @@ import {
     Truck,
     Shield,
     CreditCard,
-    X
+    X,
+    MapPin,
+    Home
 } from 'lucide-react';
 import { useCartStore } from '../stores/useCartStore';
 import { instance } from '../lib/axios';
+import AddressModal from '../components/AddressModal';
 
 const CartPage = () => {
     const { cart, total, loading, deleteFromCart, updateQuantity } = useCartStore();
 
+    // Same increment/decrement functions
     async function increment(id, quantity) {
         console.log("Item increased", id);
         await updateQuantity(id, quantity + 1);
@@ -124,7 +128,7 @@ const CartPage = () => {
     );
 };
 
-// Mobile Optimized Cart Item
+// Same MobileCartItem component (unchanged)
 const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => {
     return (
         <motion.div
@@ -135,8 +139,6 @@ const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => 
             className="bg-white/5 rounded-2xl p-4 border border-white/10"
         >
             <div className="flex gap-4">
-
-                {/* Product Image - Smaller on Mobile */}
                 <div className="flex-shrink-0">
                     <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/10">
                         {item.product.image && item.product.image.length > 0 ? (
@@ -153,7 +155,6 @@ const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => 
                     </div>
                 </div>
 
-                {/* Product Details */}
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-3">
                         <div className="flex-1 pr-2">
@@ -165,7 +166,6 @@ const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => 
                             </p>
                         </div>
 
-                        {/* Delete Button - Always Visible on Mobile */}
                         <button
                             onClick={onDelete}
                             className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 
@@ -175,7 +175,6 @@ const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => 
                         </button>
                     </div>
 
-                    {/* Price and Quantity Row */}
                     <div className="flex items-center justify-between">
                         <div>
                             <span className="text-lg font-bold text-amber-400">
@@ -186,7 +185,6 @@ const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => 
                             </p>
                         </div>
 
-                        {/* Compact Quantity Controls */}
                         <div className="flex items-center bg-white/10 rounded-lg">
                             <button
                                 onClick={onDecrement}
@@ -215,40 +213,56 @@ const MobileCartItem = ({ item, index, onIncrement, onDecrement, onDelete }) => 
     );
 };
 
-// Mobile Order Summary
+// FIXED Order Summary with Proper Address Logic
 const MobileOrderSummary = ({ total, deliveryFee, totalPrice, itemCount }) => {
-    const { user } = useUserStore()
-    const { cart } = useCartStore()
+    const { user } = useUserStore();
+    const { cart } = useCartStore();
+    const [showAddressModal, setShowAddressModal] = useState(false);
+    const [selectedAddress, setSelectedAddress] = useState(null);
 
-    const proceedToCheckout = async (totalAmount) => {
+    // FIXED ADDRESS CHECK LOGIC 🎯
+    const proceedToCheckout = async () => {
         try {
-            console.log("inside procced to checkout")
+            console.log("Checking user addresses...");
 
-            //setting total Amount
-            const finalAmount = Number(totalAmount)
+            // If address already selected, go directly to payment
+            if (selectedAddress) {
+                console.log("Address already selected, proceeding to payment");
+                await proceedToPayment(totalPrice, selectedAddress);
+                return;
+            }
 
+            // No address selected - show modal
+            console.log("No address selected - showing address modal");
+            setShowAddressModal(true);
 
-            //making call to get razorpay key
-            const response1 = await instance.get('/api/payment/get-key')
-            console.log(response1)
-            const key = response1.data.key
-            console.log(key)
+        } catch (error) {
+            console.log("Error in address check:", error);
+        }
+    };
 
+    // Payment function (called after address is confirmed)
+    const proceedToPayment = async (totalAmount, address) => {
+        try {
+            console.log("Proceeding to payment with address:", address);
 
+            const finalAmount = Number(totalAmount);
 
-            //making call to create order
-            const response2 = await instance.post('/api/payment/process-payment', { amount: finalAmount, cart })
-            console.log(response2)
-            console.log(response2.data.order.amount)
-            console.log(response2.data.order.currency)
-            console.log(response2.data.order.id)
+            // Get Razorpay key
+            const response1 = await instance.get('/api/payment/get-key');
+            const key = response1.data.key;
 
+            // Create order with address
+            const response2 = await instance.post('/api/payment/process-payment', {
+                amount: finalAmount,
+                cart,
+                shippingAddress: address // Include selected address
+            });
 
-
-            //now creating options
+            // Razorpay options configuration
             const options = {
-                key: response1.data.key,
-                amount: response2.data.order.amount, // already in paise
+                key: key,
+                amount: Number(response2.data.order.amount),
                 currency: response2.data.order.currency,
                 name: 'Sneakerzy',
                 description: 'Transaction for shoes',
@@ -259,93 +273,148 @@ const MobileOrderSummary = ({ total, deliveryFee, totalPrice, itemCount }) => {
                     email: user.email,
                 },
                 theme: {
-                    color: '#F59E0B',         // Your amber primary color
-                    backdrop_color: '#111827', // Dark background
-                    hide_topbar: false,       // Show Razorpay branding
-                },
-
+                    color: '#F59E0B',
+                    backdrop_color: '#111827',
+                    hide_topbar: false,
+                }
             };
+
             const rzp = new window.Razorpay(options);
             rzp.open();
         } catch (error) {
-            console.log(error)
+            console.log("Payment error:", error);
         }
-    }
+    };
+
+    // FIXED ADDRESS SELECTION HANDLER
+    const handleAddressSelect = (address) => {
+        console.log("Address selected:", address);
+        setSelectedAddress(address);
+        setShowAddressModal(false);
+        // Automatically proceed to payment after address selection
+        // proceedToPayment(totalPrice, address);
+    };
+
+    // CHANGE ADDRESS FUNCTION
+    const changeAddress = () => {
+        setSelectedAddress(null);
+        setShowAddressModal(true);
+    };
+
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white/5 rounded-2xl border border-white/10 p-5 sticky top-4"
-        >
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Tag size={18} className="text-amber-400" />
-                Order Summary
-            </h2>
+        <>
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white/5 rounded-2xl border border-white/10 p-5 sticky top-4"
+            >
+                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Tag size={18} className="text-amber-400" />
+                    Order Summary
+                </h2>
 
-            {/* Price Breakdown */}
-            <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center">
-                    <span className="text-white/70 text-sm">Subtotal ({itemCount} items)</span>
-                    <span className="text-white font-medium">₹{Number(total).toLocaleString()}</span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                    <span className="text-white/70 text-sm flex items-center gap-2">
-                        <Truck size={14} />
-                        Delivery Fee
-                    </span>
-                    <span className="text-white font-medium">₹{deliveryFee}</span>
-                </div>
-
-                <div className="border-t border-white/20 pt-3">
+                {/* Price Breakdown */}
+                <div className="space-y-3 mb-6">
                     <div className="flex justify-between items-center">
-                        <span className="font-semibold text-white">Total</span>
-                        <span className="text-xl font-bold text-amber-400">₹{totalPrice.toLocaleString()}</span>
+                        <span className="text-white/70 text-sm">Subtotal ({itemCount} items)</span>
+                        <span className="text-white font-medium">₹{Number(total).toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                        <span className="text-white/70 text-sm flex items-center gap-2">
+                            <Truck size={14} />
+                            Delivery Fee
+                        </span>
+                        <span className="text-white font-medium">₹{deliveryFee}</span>
+                    </div>
+
+                    <div className="border-t border-white/20 pt-3">
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-white">Total</span>
+                            <span className="text-xl font-bold text-amber-400">₹{totalPrice.toLocaleString()}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Trust Indicators - Compact */}
-            <div className="grid grid-cols-3 gap-2 mb-6 text-xs">
-                <div className="flex flex-col items-center gap-1 text-green-400">
-                    <Shield size={16} />
-                    <span>Secure</span>
-                </div>
-                <div className="flex flex-col items-center gap-1 text-blue-400">
-                    <Truck size={16} />
-                    <span>Fast</span>
-                </div>
-                <div className="flex flex-col items-center gap-1 text-purple-400">
-                    <CreditCard size={16} />
-                    <span>Easy Returns</span>
-                </div>
-            </div>
+                {/* Address Preview (if selected) */}
+                {selectedAddress && (
+                    <div className="mb-4 p-3 bg-white/5 rounded-xl border border-white/10">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <MapPin className="text-amber-400" size={16} />
+                                <span className="text-white font-medium text-sm">Delivery Address</span>
+                            </div>
+                            <button
+                                onClick={changeAddress}
+                                className="text-amber-400 text-xs hover:text-amber-300"
+                            >
+                                Change
+                            </button>
+                        </div>
+                        <p className="text-white/70 text-sm leading-relaxed">
+                            {selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postalCode}
+                        </p>
+                    </div>
+                )}
 
-            {/* Action Buttons */}
-            <div className="space-y-3">
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 
-                             text-gray-900 font-bold py-4 rounded-xl transition-all
-                             flex items-center justify-center gap-2 shadow-lg"
-                    onClick={() => proceedToCheckout(totalPrice)}
-                >
-                    <CreditCard size={18} />
-                    Proceed to Checkout
-                </motion.button>
+                {/* Trust Indicators */}
+                <div className="grid grid-cols-3 gap-2 mb-6 text-xs">
+                    <div className="flex flex-col items-center gap-1 text-green-400">
+                        <Shield size={16} />
+                        <span>Secure</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 text-blue-400">
+                        <Truck size={16} />
+                        <span>Fast</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 text-purple-400">
+                        <CreditCard size={16} />
+                        <span>Easy Returns</span>
+                    </div>
+                </div>
 
-                <Link
-                    to="/"
-                    className="block w-full text-center py-3 text-amber-400 hover:text-amber-300 
-                             font-medium transition-colors border border-amber-500/30 
-                             rounded-xl hover:bg-amber-500/10"
-                >
-                    Continue Shopping
-                </Link>
-            </div>
-        </motion.div>
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full bg-gradient-to-r from-amber-500 to-orange-500 
+                                 text-gray-900 font-bold py-4 rounded-xl transition-all
+                                 flex items-center justify-center gap-2 shadow-lg"
+                        onClick={proceedToCheckout}
+                    >
+                        {selectedAddress ? (
+                            <>
+                                <CreditCard size={18} />
+                                Proceed to Payment
+                            </>
+                        ) : (
+                            <>
+                                <MapPin size={18} />
+                                Select Delivery Address
+                            </>
+                        )}
+                    </motion.button>
+
+                    <Link
+                        to="/"
+                        className="block w-full text-center py-3 text-amber-400 hover:text-amber-300 
+                                 font-medium transition-colors border border-amber-500/30 
+                                 rounded-xl hover:bg-amber-500/10"
+                    >
+                        Continue Shopping
+                    </Link>
+                </div>
+            </motion.div>
+
+            {/* ADDRESS MODAL */}
+            <AddressModal
+                isOpen={showAddressModal}
+                onClose={() => setShowAddressModal(false)}
+                onAddressSelect={handleAddressSelect} // Fixed handler
+            />
+        </>
     );
 };
 

@@ -5,50 +5,121 @@ import Order from "../models/Order.model.js"
 //creating an order using razorpay
 export const paymentProcess = async (req, res) => {
     try {
-        const { cart } = req.body
-        const options = {
-            amount: (Number(req.body.amount) * 100),
-            currency: "INR"
+        const { cart, shippingAddress } = req.body; // Added shippingAddress
+        console.log(typeof req.body.amount, "Inside the payment process");
+
+        // Validate shipping address
+        if (!shippingAddress) {
+            return res.status(400).json({
+                success: false,
+                message: "Shipping address is required"
+            });
         }
 
-        const order = await razorpayInstance.orders.create(options)
+        // Validate required address fields
+        const { street, city, state, postalCode } = shippingAddress;
+        if (!street || !city || !state || !postalCode) {
+            return res.status(400).json({
+                success: false,
+                message: "Complete address details are required"
+            });
+        }
 
-        //product array
-        let arr = []
+        // Validate PIN code
+        if (!/^\d{6}$/.test(postalCode)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid 6-digit PIN code"
+            });
+        }
+
+        const options = {
+            amount: Math.round(Number(req.body.amount) * 100),
+            currency: "INR"
+        };
+
+        const order = await razorpayInstance.orders.create(options);
+
+        // Product array
+        let arr = [];
         for (let i = 0; i < cart.length; i++) {
             let obj = {
                 product: cart[i].product._id,
                 quantity: cart[i].quantity,
                 price: cart[i].product.price
-            }
-            arr.push(obj)
+            };
+            arr.push(obj);
         }
 
-
-        //total amount
-        let totalAmount = 0
+        // Total amount
+        let totalAmount = 0;
         for (let i = 0; i < arr.length; i++) {
-            totalAmount += Number(arr[i].price) * Number(arr[i].quantity)
+            totalAmount += Number(arr[i].price) * Number(arr[i].quantity);
         }
 
+        // User
+        const userId = req.user._id;
 
-        //user
-        const userId = req.user._id
+        // Razorpay order id
+        let razorpayOrderId = order.id;
 
+        // 🏠 CREATE ORDER WITH SHIPPING ADDRESS
+        await Order.create({
+            user: userId,
+            products: arr,
+            totalAmount: Number(totalAmount),
+            razorpayOrderId,
 
+            // ADDRESS SNAPSHOT - Save complete address
+            shippingAddress: {
+                street: street.trim(),
+                city: city.trim(),
+                state: state.trim(),
+                postalCode: postalCode.trim(),
+                country: shippingAddress.country || 'India',
+                landmark: shippingAddress.landmark?.trim() || '',
+                addressType: shippingAddress.addressType || 'home'
+            },
 
-        //razorpay order id
-        let razorpayOrderId = order.id
-        await Order.create({ user: userId, products: arr, totalAmount, razorpayOrderId })
+            status: 'confirmed' // Initial status
+        });
 
+        console.log("Order created with shipping address:", {
+            orderId: razorpayOrderId,
+            address: `${city}, ${state} - ${postalCode}`
+        });
 
-        return res.status(200).send({ order })
+        return res.status(200).json({
+            success: true,
+            order,
+            message: "Order created successfully with delivery address"
+        });
+
     } catch (error) {
-        console.log("Inside payment")
-        console.log(error)
-        return res.status(500).json({ message: error.message })
+        console.log("Inside payment error:", error);
+
+        // Handle duplicate razorpayOrderId error
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "Order already exists"
+            });
+        }
+
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: messages.join(', ')
+            });
+        }
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Payment processing failed"
+        });
     }
-}
+};
 
 
 //key will be needed to show payment page

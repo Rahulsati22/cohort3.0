@@ -12,6 +12,7 @@ import productRouter from './routes/product.route.js';
 import cartRouter from './routes/cart.route.js';
 import paymentRouter from './routes/payment.route.js';
 import analyticsRouter from './routes/analytics.route.js';
+import router from './routes/address.route.js';
 
 
 //mongodb connection function
@@ -51,8 +52,9 @@ app.use("/api/product", productRouter)
 app.use("/api/cart", cartRouter)
 app.use("/api/payment", paymentRouter)
 app.use("/api/analytics", analyticsRouter)
+app.use("/api/address", router)
 
 //listening on the port
-app.listen(PORT, () => { 
+app.listen(PORT, () => {
     console.log(`server is running on ${PORT}`)
 })  

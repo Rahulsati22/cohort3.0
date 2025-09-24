@@ -29,17 +29,61 @@ const UserSchema = new mongoose.Schema({
         }
     }],
 
+    // 🏠 ADDRESS FIELDS - NO REQUIRED (User will add during checkout)
+    addresses: [{
+        street: { 
+            type: String, 
+            trim: true 
+        },
+        city: { 
+            type: String, 
+            trim: true 
+        },
+        state: { 
+            type: String, 
+            trim: true 
+        },
+        postalCode: { 
+            type: String, 
+            trim: true,
+            validate: {
+                validator: function(v) {
+                    return /^\d{6}$/.test(v);
+                },
+                message: 'Please enter a valid 6-digit PIN code'
+            }
+        },
+        country: { 
+            type: String, 
+            default: 'India' 
+        },
+        landmark: { 
+            type: String, 
+            trim: true 
+        },
+        addressType: { 
+            type: String, 
+            enum: ['home', 'office', 'other'], 
+            default: 'home' 
+        },
+        isDefault: { 
+            type: Boolean, 
+            default: false 
+        }
+    }],
+
+    defaultAddressId: {
+        type: mongoose.Schema.Types.ObjectId
+    },
+
     role: {
         type: String,
         enum: ['Admin', 'User'],
         default: 'User'
     }
-    //created at updated at
 }, { timestamps: true })
 
-
-
-//pre save hook to save password before saving to database
+// Pre save hook and methods remain same...
 UserSchema.pre('save', async function (next) {
     if (!this.isModified("password"))
         return next()
@@ -50,20 +94,13 @@ UserSchema.pre('save', async function (next) {
     } catch (error) {
         next(error)
     }
-
 })
 
-
-
-//now we will write a userSchema method
 UserSchema.methods.comparePassword = async function (userPassword) {
     console.log('comparing password')
     return bcrypt.compare(userPassword, this.password)
 }
 
-
 const User = mongoose.model("User", UserSchema)
-
-
 
 export default User
