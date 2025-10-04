@@ -479,13 +479,79 @@ class BottleMaker4 {
     }
 
     //in this way getter and setter work
-    set username(name){
+    set username(name) {
         // this.name = name
         console.log(name)
     }
-     
+
 }
 let childBottle2 = new BottleMaker4('hululu')
 console.log(childBottle2.username)
-childBottle2.username='hello world'
+childBottle2.username = 'hello world'
+
+
+
+
+
+
+
+
+
+
+
+// example of static classes
+class Nodes {
+    public static version: number = 1.2
+}
+
+console.log(Nodes.version)
+// Node.version cannot do it if the class is not static
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//abstract classes in typescript
+abstract class Animal {
+    abstract makeSound(): void
+
+    move() {
+        console.log('moving')
+    }
+}
+
+
+class Dog extends Animal{
+    makeSound(): void {
+        console.log('bow bow')
+    }
+}
+
+class Cat extends Animal{
+    makeSound(): void {
+        console.log('meow meow')
+    }
+}
+
+const dog = new Dog()
+dog.makeSound()
+dog.move()
+
+
+const cat = new Cat()
+cat.makeSound()
+cat.move()
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//

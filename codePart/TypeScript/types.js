@@ -296,4 +296,48 @@ var BottleMaker4 = /** @class */ (function () {
 var childBottle2 = new BottleMaker4('hululu');
 console.log(childBottle2.username);
 childBottle2.username = 'hello world';
+// example of static classes
+var Nodes = /** @class */ (function () {
+    function Nodes() {
+    }
+    Nodes.version = 1.2;
+    return Nodes;
+}());
+console.log(Nodes.version);
+// Node.version cannot do it if the class is not static
+//abstract classes in typescript
+var Animal = /** @class */ (function () {
+    function Animal() {
+    }
+    Animal.prototype.move = function () {
+        console.log('moving');
+    };
+    return Animal;
+}());
+var Dog = /** @class */ (function (_super) {
+    __extends(Dog, _super);
+    function Dog() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Dog.prototype.makeSound = function () {
+        console.log('bow bow');
+    };
+    return Dog;
+}(Animal));
+var Cat = /** @class */ (function (_super) {
+    __extends(Cat, _super);
+    function Cat() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Cat.prototype.makeSound = function () {
+        console.log('meow meow');
+    };
+    return Cat;
+}(Animal));
+var dog = new Dog();
+dog.makeSound();
+dog.move();
+var cat = new Cat();
+cat.makeSound();
+cat.move();
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//
