@@ -1,4 +1,19 @@
 /* code compile hojaega lekin warning aaegi*/
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 // -------------------------------------------------some code in ts---------------------------------------//
 var a = 10;
 var ab = "hello";
@@ -203,4 +218,56 @@ var Human = /** @class */ (function () {
 }());
 var rahul = new Human("rahul", "white", "male", 5);
 rahul.display();
+/* Public and Private access modifier
+   *public access modifier are accessible from anywhere where as we have to use getters and setters to access private access modifier
+*/
+/*
+   *example of private access modifier and public access modifier
+*/
+var BottleMaker2 = /** @class */ (function () {
+    function BottleMaker2(name) {
+        this.name = name;
+        this.name = name;
+    }
+    BottleMaker2.prototype.set = function (nameNew) {
+        this.name = nameNew;
+    };
+    BottleMaker2.prototype.get = function () {
+        console.log(this.name);
+    };
+    return BottleMaker2;
+}());
+var bottleb1 = new BottleMaker2("milton");
+//it is allowed but it will show error laal laal aaega comment hta ke dekho
+//console.log(bottleb1.name)
+//bottleb1.name = 'hululu'
+//private variable are only accessible inside the class they are created whereas public variable are accessible from anywhere and protected are only accessible inside the class and its child classes
+bottleb1.set('hululu');
+bottleb1.get();
+//now writing example of protected
+var BottleMaker3 = /** @class */ (function () {
+    function BottleMaker3(name) {
+        this.name = name;
+        this.name = name;
+    }
+    return BottleMaker3;
+}());
+var ChildBottle = /** @class */ (function (_super) {
+    __extends(ChildBottle, _super);
+    function ChildBottle(name) {
+        return _super.call(this, name) || this;
+    }
+    ChildBottle.prototype.get = function () {
+        //agar private hota to this.name nhi kr pate
+        console.log(this.name);
+    };
+    ChildBottle.prototype.set = function (newName) {
+        this.name = newName;
+    };
+    return ChildBottle;
+}(BottleMaker3));
+var childBottle = new ChildBottle('hululu');
+childBottle.get();
+childBottle.set('hey');
+childBottle.get();
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//

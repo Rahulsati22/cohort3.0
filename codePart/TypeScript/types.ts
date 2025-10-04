@@ -385,4 +385,99 @@ class Human {
 
 let rahul = new Human("rahul", "white", "male", 5)
 rahul.display()
+
+
+
+
+
+
+
+
+
+
+
+
+/* Public and Private access modifier
+   *public access modifier are accessible from anywhere where as we have to use getters and setters to access private access modifier
+*/
+
+/*
+   *example of private access modifier and public access modifier
+*/
+
+class BottleMaker2 {
+    constructor(private name: string) {
+        this.name = name
+    }
+    set(nameNew: string) {
+        this.name = nameNew
+    }
+    get() {
+        console.log(this.name)
+    }
+}
+
+let bottleb1 = new BottleMaker2("milton")
+
+//it is allowed but it will show error laal laal aaega comment hta ke dekho
+//console.log(bottleb1.name)
+//bottleb1.name = 'hululu'
+//private variable are only accessible inside the class they are created whereas public variable are accessible from anywhere and protected are only accessible inside the class and its child classes
+bottleb1.set('hululu')
+bottleb1.get()
+
+
+
+//now writing example of protected
+class BottleMaker3 {
+    constructor(protected name: string) {
+        this.name = name
+    }
+}
+
+class ChildBottle extends BottleMaker3 {
+    constructor(name: string) {
+        super(name)
+    }
+    get() {
+        //agar private hota to this.name nhi kr pate
+        console.log(this.name)
+    }
+    set(newName: string) {
+        this.name = newName
+    }
+}
+
+let childBottle = new ChildBottle('hululu')
+childBottle.get()
+childBottle.set('hey')
+childBottle.get()
+// childBottle.name not allowed in case of private and protected elements
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*now we will see the use of read only -> agar aap kisi variable ko bs chahte ho padh hi pae and change na kr pae then use read only*/
+class BottleMaker4 {
+    constructor(public readonly name?: string) { //? ka mtlb hai aapki mrzi hai do ya na do
+        this.name = name
+    }
+
+    get() {
+        //agar private hota to this.name nhi kr pate
+        console.log(this.name)
+    }
+    set(){
+        //this.name = 'hello'//you cannot do this typescript warning dega
+    }
+}
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//
