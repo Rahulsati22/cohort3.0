@@ -472,12 +472,20 @@ class BottleMaker4 {
         this.name = name
     }
 
-    get() {
+    //in this way getter and setters work
+    get username() {
         //agar private hota to this.name nhi kr pate
-        console.log(this.name)
+        return this.name
     }
-    set(){
-        //this.name = 'hello'//you cannot do this typescript warning dega
+
+    //in this way getter and setter work
+    set username(name){
+        // this.name = name
+        console.log(name)
     }
+     
 }
+let childBottle2 = new BottleMaker4('hululu')
+console.log(childBottle2.username)
+childBottle2.username='hello world'
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//

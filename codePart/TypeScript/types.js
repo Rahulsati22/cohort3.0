@@ -270,4 +270,30 @@ var childBottle = new ChildBottle('hululu');
 childBottle.get();
 childBottle.set('hey');
 childBottle.get();
+// childBottle.name not allowed in case of private and protected elements
+/*now we will see the use of read only -> agar aap kisi variable ko bs chahte ho padh hi pae and change na kr pae then use read only*/
+var BottleMaker4 = /** @class */ (function () {
+    function BottleMaker4(name) {
+        this.name = name;
+        this.name = name;
+    }
+    Object.defineProperty(BottleMaker4.prototype, "username", {
+        //in this way getter and setters work
+        get: function () {
+            //agar private hota to this.name nhi kr pate
+            return this.name;
+        },
+        //in this way getter and setter work
+        set: function (name) {
+            // this.name = name
+            console.log(name);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    return BottleMaker4;
+}());
+var childBottle2 = new BottleMaker4('hululu');
+console.log(childBottle2.username);
+childBottle2.username = 'hello world';
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//
