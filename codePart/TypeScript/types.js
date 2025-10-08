@@ -280,7 +280,6 @@ var BottleMaker4 = /** @class */ (function () {
     Object.defineProperty(BottleMaker4.prototype, "username", {
         //in this way getter and setters work
         get: function () {
-            //agar private hota to this.name nhi kr pate
             return this.name;
         },
         //in this way getter and setter work
@@ -341,3 +340,93 @@ var cat = new Cat();
 cat.makeSound();
 cat.move();
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//
+//-----------------------------------------------------------Introduction to Functions-----------------------------------------------------------//
+function func() {
+    return "hey";
+}
+function func2() {
+    console.log("hey");
+}
+//function whose return type will be void and accept a string argument
+function func3(name, cb) {
+    console.log(name);
+    cb('name is rahul');
+}
+func3("hello", function (value) { console.log(value); });
+//another example for practice
+function func44(naam, ekFunction) {
+    console.log(naam);
+    ekFunction();
+}
+function nyaFunction() {
+    console.log("hello");
+}
+func44("rahul sati", nyaFunction);
+//optional parameters in functions
+function optionalExample(name, age, gender) {
+    console.log(name);
+    console.log(age);
+    if (gender)
+        console.log(gender);
+}
+optionalExample("rahul", 20, "male");
+optionalExample("rahul", 20);
+//another method to use optional parameters
+function optionalExample2(name, age, gender) {
+    if (gender === void 0) { gender = "other"; }
+    console.log(name);
+    console.log(age);
+    console.log(gender);
+}
+optionalExample2("rahul", 20, "male");
+optionalExample2("rahul", 20);
+//rest parameters in functions
+//agaar app function ke parameter mein "..." user kr rhe ho to rest parameters hote hain aur unhe hum ek hi array mein store krte hain
+function restParameterExample() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    console.log(args);
+}
+restParameterExample(1, 2, 3, 4, "hello", true);
+//another example of rest parameter 
+function sumValues() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    var sum = 0;
+    args.map(function (value) {
+        sum += value;
+    });
+    console.log("The sum of the given elements are", sum);
+}
+sumValues(1, 2, 3, 4, 5);
+function someFunc(a) {
+    if (typeof a === 'number') {
+        console.log(a);
+    }
+    else {
+        var sum_1 = 0;
+        a.map(function (value) {
+            sum_1 += value;
+        });
+        console.log(sum_1);
+        return sum_1;
+    }
+}
+someFunc(2);
+someFunc([1, 2, 3, 4, 5]);
+function someFunc2(a, b) {
+    if (typeof a === 'string') {
+        console.log(a);
+    }
+    else {
+        console.log(a + b);
+        return a + b;
+    }
+}
+someFunc2("hello");
+someFunc2(1, 2);
+//-----------------------------------------------------------Introduction to Functions-----------------------------------------------------------//

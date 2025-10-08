@@ -474,7 +474,6 @@ class BottleMaker4 {
 
     //in this way getter and setters work
     get username() {
-        //agar private hota to this.name nhi kr pate
         return this.name
     }
 
@@ -526,6 +525,7 @@ console.log(Nodes.version)
 
 //abstract classes in typescript
 abstract class Animal {
+    //compulsory to implement this in children
     abstract makeSound(): void
 
     move() {
@@ -534,13 +534,13 @@ abstract class Animal {
 }
 
 
-class Dog extends Animal{
+class Dog extends Animal {
     makeSound(): void {
         console.log('bow bow')
     }
 }
 
-class Cat extends Animal{
+class Cat extends Animal {
     makeSound(): void {
         console.log('meow meow')
     }
@@ -555,3 +555,194 @@ const cat = new Cat()
 cat.makeSound()
 cat.move()
 //-----------------------------------------------------------Classes and Objects-----------------------------------------------------------//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//-----------------------------------------------------------Introduction to Functions-----------------------------------------------------------//
+function func(): string {
+    return "hey"
+}
+
+function func2(): void {
+    console.log("hey")
+}
+
+
+//function whose return type will be void and accept a string argument
+function func3(name: string, cb: (a: string) => void) {
+    console.log(name)
+    cb('name is rahul')
+}
+func3("hello", (value: string) => { console.log(value) })
+
+
+
+//another example for practice
+function func44(naam: string, ekFunction: () => void) {
+    console.log(naam)
+    ekFunction()
+}
+
+function nyaFunction(): void {
+    console.log("hello")
+}
+
+func44("rahul sati", nyaFunction)
+
+
+
+
+
+
+//optional parameters in functions
+function optionalExample(name: string, age: number, gender?: string) {
+    console.log(name)
+    console.log(age)
+    if (gender)
+        console.log(gender)
+}
+
+optionalExample("rahul", 20, "male")
+optionalExample("rahul", 20)
+
+
+
+
+//another method to use optional parameters
+function optionalExample2(name: string, age: number, gender: string = "other") {
+    console.log(name)
+    console.log(age)
+    console.log(gender)
+}
+
+
+optionalExample2("rahul", 20, "male")
+optionalExample2("rahul", 20)
+
+
+
+
+
+
+
+//rest parameters in functions
+//agaar app function ke parameter mein "..." user kr rhe ho to rest parameters hote hain aur unhe hum ek hi array mein store krte hain
+function restParameterExample(...args: (number | string | boolean)[]) {
+    console.log(args)
+}
+
+restParameterExample(1, 2, 3, 4, "hello", true)
+
+
+
+//another example of rest parameter 
+function sumValues(...args: number[]) { //name can be anything args, arr, etc.
+    let sum = 0;
+    args.map((value) => {
+        sum += value
+    })
+    console.log("The sum of the given elements are", sum)
+}
+sumValues(1, 2, 3, 4, 5)
+
+
+
+
+
+
+
+
+//now we will study about function overloading
+// function someFunc(a: number): number {
+//     return a
+// }
+// function someFunc(a: string): string {                       //->typescript doesn't allow function overloading in this way
+//     return a
+// }
+
+// someFunc(2)
+// someFunc("hello world")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//now we will see how to do function overloading
+
+function someFunc(a: number): void
+function someFunc(a: number[]): number
+function someFunc(a: any): void | number {
+    if (typeof a === 'number') {
+        console.log(a)
+    } else {
+        let sum = 0;
+        a.map((value: number) => {
+            sum += value
+        })
+        console.log(sum)
+        return sum
+    }
+}
+
+someFunc(2)
+someFunc([1, 2, 3, 4, 5])
+
+
+
+
+
+
+
+
+
+
+
+//another example of function overloading
+function someFunc2(a: string): void;
+function someFunc2(a: number, b: number): number;
+
+
+function someFunc2(a: any, b?: any): void | number {
+    if (typeof a === 'string') {
+        console.log(a)
+    } else {
+        console.log(a + b)
+        return a + b
+    }
+}
+someFunc2("hello")
+someFunc2(1, 2)
+// someFunc2(true) warning by typescript laal laal aaega
+//-----------------------------------------------------------Introduction to Functions-----------------------------------------------------------//
