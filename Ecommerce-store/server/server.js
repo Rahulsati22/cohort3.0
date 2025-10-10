@@ -13,14 +13,12 @@ import cartRouter from './routes/cart.route.js';
 import paymentRouter from './routes/payment.route.js';
 import analyticsRouter from './routes/analytics.route.js';
 import router from './routes/address.route.js';
-
+import orderRouter from './routes/order.route.js'
 
 //mongodb connection function
 import { connectDb } from './lib/db.js';
 
 
-//reddis instance
-import client from './lib/redisClient.js';
 
 
 //function so that we can access dotenv
@@ -53,6 +51,7 @@ app.use("/api/cart", cartRouter)
 app.use("/api/payment", paymentRouter)
 app.use("/api/analytics", analyticsRouter)
 app.use("/api/address", router)
+app.use("/api/order", orderRouter)
 
 //listening on the port
 app.listen(PORT, () => {

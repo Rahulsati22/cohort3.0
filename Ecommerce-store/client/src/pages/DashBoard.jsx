@@ -5,19 +5,27 @@ import Analytics from '../components/Analytics'
 import Products from '../components/Products';
 import CreateProduct from '../components/CreateProduct';
 import useProductStore from '../stores/useProductStore';
+import { useAnalyticsStore } from '../stores/useAnalyticsStore';
+import Orders from '../components/Orders';
+import { useOrdersStore } from '../stores/useOrderStore';
 
 const tabs = [
     { id: "create", label: "Create Product", icon: PlusCircle },
     { id: "products", label: "Products", icon: ShoppingBasket },
     { id: "analytics", label: "Analytics", icon: ChartBar },
+    { id: "orders", label: "Orders", icon: ShoppingBasket } // Placeholder for future Orders tab
 ];
 
 const DashBoard = () => {
     const [activeTab, setActiveTab] = useState("create");
-    const { getAllProducts, products } = useProductStore();
+    const { getAllProducts } = useProductStore();
+    const { getStats } = useAnalyticsStore();
+    const { getAllOrders } = useOrdersStore();
 
     useEffect(() => {
         getAllProducts();
+        getStats()
+        getAllOrders()
     }, [])
 
     return (
@@ -167,6 +175,7 @@ const DashBoard = () => {
                         {activeTab === "create" && <CreateProduct />}
                         {activeTab === "products" && <Products />}
                         {activeTab === "analytics" && <Analytics />}
+                        {activeTab == "orders" && <Orders />}
                     </div>
                 </motion.div>
             </section>

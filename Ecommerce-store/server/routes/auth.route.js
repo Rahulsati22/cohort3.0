@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { signup, login, refreshToken, userProfile, logout } from "../controllers/auth.controller.js";
+import { signup, login, userProfile, logout } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
 const authRouter = Router()
@@ -12,7 +12,7 @@ authRouter.post('/login', login)
 
 
 //route for refresh token
-authRouter.post('/refresh-token', refreshToken)
+// authRouter.post('/refresh-token', refreshToken)
 
 
 //route for user profile

@@ -2,8 +2,8 @@ import User from '../models/User.model.js'
 import jwt from 'jsonwebtoken'
 export async function protectRoute(req, res, next) {
     try {
-        if (req.cookies.accessToken) {
-            const userId = await jwt.verify(req.cookies.accessToken, process.env.JWT_SECRET_ACCESS).userId
+        if (req.cookies.refreshToken) {
+            const userId = await jwt.verify(req.cookies.refreshToken, process.env.JWT_SECRET_REFRESH).userId
             const user = await User.findById(userId)
             if (!user)
                 return res.status(200).send({ message: "User doesn't found" })

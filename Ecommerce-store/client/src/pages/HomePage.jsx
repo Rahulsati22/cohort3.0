@@ -1,9 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import CategoryCard from "../components/CategoryCard";
 import { Link, useNavigate } from "react-router-dom";
-
-// If routing per-category is needed later, import Link from 'react-router-dom' and wrap each card.
+import { Search, X, TrendingUp, Clock, Filter } from 'lucide-react';
 
 const categories = [
   {
@@ -58,6 +57,15 @@ const categories = [
   }
 ];
 
+// Popular searches for suggestions [web:591]
+const popularSearches = [
+  "Nike Air Max", "Adidas Ultraboost", "Converse", "Vans", "Puma", "Jordan", "Reebok", "New Balance"
+];
+
+const trendingSearches = [
+  "Running Shoes", "Basketball Shoes", "Casual Sneakers", "Formal Shoes", "Boots"
+];
+
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -66,13 +74,69 @@ const container = {
   }
 };
 
-
-
-
 const HomePage = () => {
- 
- 
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState(categories);
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const savedSearches = localStorage.getItem('recentSearches');
+    if (savedSearches) {
+      setRecentSearches(JSON.parse(savedSearches));
+    }
+  }, []);
+
+  // Filter categories based on search query [web:587]
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredCategories(categories);
+    } else {
+      const filtered = categories.filter(category =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+    }
+  }, [searchQuery]);
+
+  // Handle search functionality [web:584]
+  const handleSearch = (query = searchQuery) => {
+    if (query.trim()) {
+      // Save to recent searches
+      const updatedRecentSearches = [query, ...recentSearches.filter(search => search !== query)].slice(0, 5);
+      setRecentSearches(updatedRecentSearches);
+      localStorage.setItem('recentSearches', JSON.stringify(updatedRecentSearches));
+      
+      // Navigate to search results or category
+      const matchedCategory = categories.find(cat => 
+        cat.name.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      if (matchedCategory) {
+        navigate(`/category/${matchedCategory.name}`);
+      } else {
+        // Navigate to general search results page (you can create this later)
+        navigate(`/search?q=${encodeURIComponent(query)}`);
+      }
+      
+      setSearchQuery('');
+      setShowSearchSuggestions(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setFilteredCategories(categories);
+    setShowSearchSuggestions(false);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion);
+    handleSearch(suggestion);
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Hero Section */}
@@ -89,9 +153,155 @@ const HomePage = () => {
               Step into Style
             </span>
           </h1>
-          <p className="text-white/70 text-lg sm:text-xl max-w-2xl mx-auto">
+          <p className="text-white/70 text-lg sm:text-xl max-w-2xl mx-auto mb-8">
             Discover premium footwear that combines comfort, quality, and cutting-edge design
           </p>
+
+          {/* MODERN SEARCH BAR [web:585] */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="relative max-w-2xl mx-auto"
+          >
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-white/60" />
+              </div>
+              
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchSuggestions(true);
+                }}
+                onFocus={() => setShowSearchSuggestions(true)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="block w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 
+                         rounded-2xl text-white placeholder-white/50 backdrop-blur-sm
+                         focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400
+                         transition-all duration-300 text-lg"
+                placeholder="Search for shoes, brands, or styles..."
+              />
+              
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                >
+                  <X className="h-5 w-5 text-white/60 hover:text-white transition-colors" />
+                </button>
+              )}
+            </div>
+
+            {/* SEARCH SUGGESTIONS DROPDOWN [web:589] */}
+            {showSearchSuggestions && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-full mt-2 w-full bg-gray-900/95 backdrop-blur-xl 
+                         rounded-2xl border border-white/10 shadow-2xl z-50 overflow-hidden"
+                onMouseLeave={() => setShowSearchSuggestions(false)}
+              >
+                {/* Quick Category Matches */}
+                {searchQuery && filteredCategories.length > 0 && (
+                  <div className="p-4">
+                    <h4 className="text-white/80 text-sm font-medium mb-2 flex items-center gap-2">
+                      <Filter size={16} />
+                      Categories
+                    </h4>
+                    <div className="space-y-1">
+                      {filteredCategories.slice(0, 3).map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => navigate(`/category/${category.name}`)}
+                          className="w-full text-left px-3 py-2 text-white/70 hover:text-white 
+                                   hover:bg-white/5 rounded-lg transition-colors text-sm
+                                   flex items-center gap-3"
+                        >
+                          <img 
+                            src={category.image} 
+                            alt={category.name}
+                            className="w-8 h-8 rounded object-cover"
+                          />
+                          {category.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent Searches */}
+                {!searchQuery && recentSearches.length > 0 && (
+                  <div className="p-4 border-b border-white/10">
+                    <h4 className="text-white/80 text-sm font-medium mb-2 flex items-center gap-2">
+                      <Clock size={16} />
+                      Recent Searches
+                    </h4>
+                    <div className="space-y-1">
+                      {recentSearches.map((search, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(search)}
+                          className="w-full text-left px-3 py-2 text-white/70 hover:text-white 
+                                   hover:bg-white/5 rounded-lg transition-colors text-sm"
+                        >
+                          {search}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trending Searches [web:591] */}
+                {!searchQuery && (
+                  <div className="p-4">
+                    <h4 className="text-white/80 text-sm font-medium mb-2 flex items-center gap-2">
+                      <TrendingUp size={16} />
+                      Trending
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {trendingSearches.map((trend, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(trend)}
+                          className="px-3 py-1.5 bg-amber-400/10 text-amber-400 rounded-full 
+                                   hover:bg-amber-400/20 transition-colors text-xs font-medium"
+                        >
+                          {trend}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Popular Searches */}
+                {searchQuery && (
+                  <div className="p-4 border-t border-white/10">
+                    <h4 className="text-white/80 text-sm font-medium mb-2">Popular Searches</h4>
+                    <div className="space-y-1">
+                      {popularSearches
+                        .filter(search => search.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .slice(0, 4)
+                        .map((search, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(search)}
+                          className="w-full text-left px-3 py-2 text-white/70 hover:text-white 
+                                   hover:bg-white/5 rounded-lg transition-colors text-sm"
+                        >
+                          <span className="font-medium text-amber-400">{searchQuery}</span>
+                          {search.toLowerCase().replace(searchQuery.toLowerCase(), '')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </motion.div>
         </motion.div>
 
         {/* Categories Section */}
@@ -105,15 +315,15 @@ const HomePage = () => {
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
               <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-200 
                              bg-clip-text text-transparent">
-                Shop by Category
+                {searchQuery ? `Search Results for "${searchQuery}"` : 'Shop by Category'}
               </span>
             </h2>
             <p className="text-white/60 text-sm hidden sm:block">
-              Explore the latest styles and classics
+              {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'} found
             </p>
           </motion.div>
 
-          {/* Responsive Grid */}
+          {/* Responsive Grid with Filtered Results */}
           <motion.div
             variants={container}
             initial="hidden"
@@ -121,15 +331,37 @@ const HomePage = () => {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 
                        gap-4 sm:gap-5 lg:gap-6"
           >
-            {categories.map((category) => (
-              <Link key={category.id} to={`/category/${category.name}`}>
-                <CategoryCard
-                  key={category.id}
-                  name={category.name}
-                  image={category.image}
-                />
-              </Link>
-            ))}
+            {filteredCategories.length > 0 ? (
+              filteredCategories.map((category) => (
+                <Link key={category.id} to={`/category/${category.name}`}>
+                  <CategoryCard
+                    name={category.name}
+                    image={category.image}
+                  />
+                </Link>
+              ))
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full text-center py-12"
+              >
+                <div className="text-white/40 mb-4">
+                  <Search size={48} className="mx-auto mb-4" />
+                </div>
+                <h3 className="text-white text-xl font-medium mb-2">No categories found</h3>
+                <p className="text-white/60 mb-4">
+                  Try searching for "{searchQuery}" in our products instead
+                </p>
+                <button
+                  onClick={() => handleSearch()}
+                  className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-gray-900 
+                           rounded-xl font-semibold transition-colors"
+                >
+                  Search Products
+                </button>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </section>

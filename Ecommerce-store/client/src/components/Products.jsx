@@ -10,6 +10,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import useProductStore from '../stores/useProductStore';
+import { useUserStore } from '../stores/useUserStore';
  
 
 const Products = () => {
@@ -55,7 +56,6 @@ const Products = () => {
       } catch (error) {
         console.error('Error deleting product:', error);
       }
-
     } catch (error) {
       console.log('Error deleting product:', error);
     }

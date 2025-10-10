@@ -1,6 +1,7 @@
 import cloudinary from "../lib/cloudinary.js";
-import client from "../lib/redisClient.js";
+
 import Product from "../models/Product.model.js";
+import User from "../models/User.model.js";
 
 const getAllProducts = async (req, res) => {
     try {
@@ -15,12 +16,8 @@ const getAllProducts = async (req, res) => {
 
 const getFeaturedProducts = async (req, res) => {
     try {
-        let featuredProducts = await client.get('featured_products')
-        if (featuredProducts)
-            return res.json(JSON.parse(featuredProducts))
         //going to return a js object instead of mongodb document
-        featuredProducts = await Product.find({ isFeatured: true }).lean()
-        await client.set('featured_products', JSON.stringify(featuredProducts))
+        let featuredProducts = await Product.find({ isFeatured: true }).lean()
         return res.status(200).send(featuredProducts)
     } catch (error) {
         console.log("Error in get featured product controller", error.message)
@@ -73,6 +70,15 @@ const deleteProduct = async (req, res) => {
     try {
         const id = req.params.id
         const product = await Product.findById(id)
+
+        await User.updateMany(
+            { 'cart.product': id },
+            {
+                $pull: {
+                    cart: { product: id }
+                }
+            }
+        );
         const image = product.image
         for (let i = 0; i < image.length; i++) {
             if (image[i]) {
@@ -116,7 +122,7 @@ const getProductsByCategory = async (req, res) => {
         const category = req.params.category
         console.log(category)
         const allProduct = await Product.find({ category })
-        return res.status(200).send({allProduct})
+        return res.status(200).send({ allProduct })
     } catch (error) {
         return res.status(500).send({ message: error.message })
     }
@@ -154,9 +160,6 @@ async function updateFeaturedProductsCache() {
     try {
         console.log('update feature start')
         const products = await Product.find({ isFeatured: true }).lean()
-        console.log(products)
-        await client.set('featured_products', JSON.stringify(products))
-        console.log('complete')
     } catch (error) {
         return res.status(500).send({ message: error.message })
     }

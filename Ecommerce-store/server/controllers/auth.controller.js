@@ -1,6 +1,5 @@
 import User from '../models/User.model.js'
-import { generateToken, storeRefreshToken } from '../helperFunctions/tokens.js'
-import client from '../lib/redisClient.js'
+import { generateToken} from '../helperFunctions/tokens.js'
 import jwt from 'jsonwebtoken'
 
 
@@ -18,20 +17,14 @@ const signup = async (req, res, next) => {
 
 
         //calling function that will generate access token and refresh token
-        const { access_token, refresh_token } = await generateToken(user._id)
+        const {refresh_token } = await generateToken(user._id)
 
         //sending refresh token to reddis
 
-        await storeRefreshToken(refresh_token, user._id)
+         
 
 
-        //saving tokens in cookies
-        await res.cookie('accessToken', access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV == "production",
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000
-        })
+       
 
         await res.cookie('refreshToken', refresh_token, {
             httpOnly: true,
@@ -66,20 +59,11 @@ const login = async (req, res, next) => {
             return res.status(401).send({ message: "Invalid credentials" })
 
 
-        const { access_token, refresh_token } = await generateToken(user._id)
+        const {refresh_token } = await generateToken(user._id)
         console.log(user._id)
 
-        await storeRefreshToken(refresh_token, user._id)
 
-
-        //saving tokens in cookies
-        await res.cookie('accessToken', access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV == "production",
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000
-        })
-
+       
 
         await res.cookie('refreshToken', refresh_token, {
             httpOnly: true,
@@ -103,38 +87,11 @@ const login = async (req, res, next) => {
 
 
 //function to refresh token that will expire after 15minutes
-const refreshToken = async (req, res, next) => {
-    try {
-        const refreshToken = req.cookies.refreshToken
-        if (!refreshToken)
-            return res.status(401).send({ message: "No  refresh token provided" })
-
-        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH)
-        const storedToken = await client.get(`refresh_token:${decoded.userId}`)
-        if (refreshToken !== storedToken)
-            return res.status(401).send({ message: "Invalid refresh token" })
-
-        const newAccessToken = await jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET_ACCESS, { expiresIn: '15m' })
-        res.cookie('accessToken', newAccessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV == "production",
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        })
-
-        return res.status(200).send({ message: "Successfully refreshed the token" })
-
-    } catch (error) {
-        console.log('error in refresh-token controller', error.message)
-        return res.status(500).json({ message: error.message })
-    }
-}
-
-
+ 
 //function for user profile
 const userProfile = async (req, res) => {
     try {
-        const userId = await jwt.verify(req.cookies.accessToken, process.env.JWT_SECRET_ACCESS).userId
+        const userId = await jwt.verify(req.cookies.refreshToken, process.env.JWT_SECRET_REFRESH).userId
         const user = await User.findById(userId).select("-password")
         if (!user)
             return res.status(401).send({ message: "User doesn't exist" })
@@ -152,9 +109,7 @@ const logout = async (req, res, next) => {
         const refreshToken = req.cookies.refreshToken
         if (refreshToken) {
             const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH)
-            await client.del(`refresh_token:${decoded.userId}`)
         }
-        res.clearCookie("accessToken")
         res.clearCookie("refreshToken")
         return res.status(200).send({ message: "Logout successfully" })
     } catch (error) {
@@ -166,6 +121,6 @@ const logout = async (req, res, next) => {
 
 
 //exporting the functions
-export { signup, login, refreshToken, userProfile, logout }
+export { signup, login, userProfile, logout }
 
 
